@@ -1,0 +1,54 @@
+/* reset.css: Basic CSS reset to ensure consistent styling across browsers */
+
+/* Box sizing reset */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* HTML5 display reset */
+article, aside, details, figcaption, figure, footer, header, hgroup, main, menu, nav, section {
+  display: block;
+}
+
+/* Body defaults */
+html, body {
+  width: 100%;
+  height: auto;
+  line-height: 1.5;
+}
+
+/* List reset */
+ul, ol {
+  list-style: none;
+}
+
+/* Link and form elements reset */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+button, input, select, textarea {
+  font: inherit;
+  background: none;
+  border: none;
+}
+
+/* Responsive media */
+img, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Typography reset */
+body {
+  font-family: inherit;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Outline reset */
+:focus {
+  outline: none;
+} 

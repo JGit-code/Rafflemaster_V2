@@ -1,0 +1,218 @@
+/* Footer Component */
+.site-footer {
+  background: linear-gradient(to bottom, var(--color-surface), rgba(17, 23, 35, 0.95));
+  padding: var(--space-2xl) var(--space-lg) var(--space-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.site-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--color-primary),
+    var(--color-secondary),
+    transparent
+  );
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-xl);
+  position: relative;
+  z-index: 1;
+}
+
+.footer-column h4 {
+  color: var(--color-primary);
+  margin-bottom: var(--space-md);
+  font-size: var(--font-size-lg);
+  position: relative;
+  display: inline-block;
+}
+
+.footer-column h4::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 30px;
+  height: 2px;
+  background: var(--color-primary);
+  border-radius: 1px;
+}
+
+.footer-column p {
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-md);
+  line-height: 1.6;
+}
+
+.footer-column ul {
+  list-style: none;
+}
+
+.footer-column ul li {
+  margin-bottom: var(--space-xs);
+  position: relative;
+}
+
+.footer-column ul li::before {
+  content: '›';
+  color: var(--color-primary);
+  position: absolute;
+  left: -15px;
+  top: 0;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all var(--transition-speed) var(--transition-easing);
+}
+
+.footer-column ul li:hover::before {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.footer-column ul li a {
+  color: var(--color-text-muted);
+  transition: all var(--transition-speed) var(--transition-easing);
+  position: relative;
+  display: inline-block;
+  padding: var(--space-xxs) 0;
+}
+
+.footer-column ul li a:hover {
+  color: var(--color-primary);
+  transform: translateX(5px);
+}
+
+.copyright {
+  margin-top: var(--space-2xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  position: relative;
+}
+
+.social-links {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  color: var(--color-text);
+  transition: all var(--transition-speed) var(--transition-easing);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.social-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+  opacity: 0;
+  transition: opacity var(--transition-speed) var(--transition-easing);
+  z-index: -1;
+}
+
+.social-link:hover {
+  color: var(--color-background);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  border-color: transparent;
+}
+
+.social-link:hover::before {
+  opacity: 1;
+}
+
+.newsletter-form {
+  margin-top: var(--space-md);
+  position: relative;
+}
+
+.newsletter-form input {
+  width: 100%;
+  padding: var(--space-sm) var(--space-lg) var(--space-sm) var(--space-sm);
+  border-radius: var(--border-radius-full);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  transition: all var(--transition-speed) var(--transition-easing);
+}
+
+.newsletter-form input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.newsletter-form button {
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  bottom: 3px;
+  border-radius: var(--border-radius-full);
+  background: linear-gradient(to right, var(--color-primary), var(--color-primary-dark));
+  color: var(--color-background);
+  border: none;
+  padding: 0 var(--space-md);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-speed) var(--transition-easing);
+}
+
+.newsletter-form button:hover {
+  transform: translateX(3px);
+  box-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.5);
+}
+
+.footer-bg-element {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(var(--color-primary-rgb), 0.15),
+    transparent 70%
+  );
+  opacity: 0.2;
+  z-index: 0;
+}
+
+.footer-bg-element-1 {
+  width: 300px;
+  height: 300px;
+  bottom: -150px;
+  right: 10%;
+}
+
+.footer-bg-element-2 {
+  width: 200px;
+  height: 200px;
+  top: 100px;
+  left: 10%;
+}

@@ -1,241 +1,292 @@
-// Handle modal functionality for Raffle Master
+/**
+ * Modal functionality for Raffle Master
+ * Handles all modal interactions including:
+ * - Ticket purchase modals
+ * - Product detail modals
+ * - Authentication modals
+ */
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize all modals
-    initTicketModal();
+    initModals();
+    
+    // Initialize ticket selector functionality
+    initTicketSelector();
+    
+    // Initialize product detail modal
     initProductDetailModal();
-    initGlobalModalHandlers();
 });
 
 /**
- * Initialize ticket purchase modal
+ * Initialize modal functionality
  */
-function initTicketModal() {
-    const ticketModal = document.getElementById('ticket-modal');
-    if (!ticketModal) return;
+function initModals() {
+    // Modal open buttons
+    const modalOpenButtons = document.querySelectorAll('[data-toggle="modal"]');
+    const modalCloseButtons = document.querySelectorAll('.modal-close');
+    const modalContainers = document.querySelectorAll('.modal-container');
     
-    const modalClose = ticketModal.querySelector('.modal-close');
-    const ticketButtons = ticketModal.querySelectorAll('.ticket-btn');
-    const customTicketInput = document.getElementById('custom-ticket-amount');
-    const ticketTotal = ticketModal.querySelector('.ticket-total');
-    const addToCartBtn = ticketModal.querySelector('.add-to-cart-btn');
-    
-    // Modal open triggers
-    const modalTriggers = document.querySelectorAll('[data-toggle="modal"]');
-    modalTriggers.forEach(trigger => {
-        trigger.addEventListener('click', (e) => {
+    // Open modal when trigger is clicked
+    modalOpenButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
             e.preventDefault();
-            const targetModal = document.getElementById(trigger.dataset.target.replace('#', ''));
+            
+            const targetModal = document.querySelector(button.dataset.target);
             if (targetModal) {
-                openModal(targetModal);
-                
-                // Update product info in modal
-                const productTitle = targetModal.querySelector('.modal-product-title');
-                const productDesc = targetModal.querySelector('.modal-product-desc');
-                
-                if (productTitle && trigger.dataset.product) {
-                    let productName = '';
-                    let productPrice = 15; // Default price
-                    let description = '';
-                    
-                    // Set product details based on data-product attribute
-                    switch(trigger.dataset.product) {
-                        case 'iphone15':
-                            productName = 'iPhone 15 Pro';
-                            productPrice = 10;
-                            description = 'Win the latest Apple iPhone 15 Pro';
-                            break;
-                        case 'macbook':
-                            productName = 'MacBook Pro';
-                            productPrice = 20;
-                            description = 'Win a brand new MacBook Pro';
-                            break;
-                        case 'gaming':
-                            productName = 'PlayStation 5 Bundle';
-                            productPrice = 12.50;
-                            description = 'Win a PS5 console with games and accessories';
-                            break;
-                        case 'holiday-crypto':
-                            productName = 'Luxury Holiday';
-                            productPrice = 15;
-                            description = 'Win a dream vacation for two';
-                            break;
-                        case 'home-makeover':
-                            productName = 'Home Renovation Package';
-                            productPrice = 25;
-                            description = 'Transform your living space with this renovation package';
-                            break;
-                        case 'polo':
-                            productName = 'VW Polo Car';
-                            productPrice = 0.90;
-                            description = 'Win a brand new VW Polo';
-                            break;
-                        default:
-                            productName = 'Raffle Entry';
-                            description = 'Enter to win amazing prizes';
-                    }
-                    
-                    // Animated text change
-                    if (productTitle.textContent !== productName) {
-                        productTitle.classList.add('fade-out');
-                        
-                        setTimeout(() => {
-                            productTitle.textContent = productName;
-                            productTitle.classList.remove('fade-out');
-                            productTitle.classList.add('fade-in');
-                            
-                            setTimeout(() => {
-                                productTitle.classList.remove('fade-in');
-                            }, 300);
-                        }, 300);
-                    } else {
-                        productTitle.textContent = productName;
-                    }
-                    
-                    if (productDesc) {
-                        productDesc.textContent = description;
-                    }
-                    
-                    // Update ticket price with animation
-                    if (ticketTotal) {
-                        const currentQuantity = parseInt(document.querySelector('.ticket-btn.active')?.dataset.quantity || 1);
-                        
-                        ticketTotal.classList.add('price-update');
-                        setTimeout(() => {
-                            ticketTotal.textContent = `R${(productPrice * currentQuantity).toFixed(2)}`;
-                            ticketTotal.classList.remove('price-update');
-                        }, 300);
-                    }
-                    
-                    // Set product data for add to cart
-                    if (addToCartBtn) {
-                        addToCartBtn.dataset.product = trigger.dataset.product;
-                        addToCartBtn.dataset.price = productPrice;
-                        addToCartBtn.dataset.name = productName;
-                    }
-                }
+                openModal(targetModal, button);
             }
         });
     });
     
-    // Modal close
-    if (modalClose) {
-        modalClose.addEventListener('click', () => {
-            closeModal(ticketModal);
+    // Close modal when close button is clicked
+    modalCloseButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const modalContainer = button.closest('.modal-container');
+            if (modalContainer) {
+                closeModal(modalContainer);
+            }
         });
+    });
+    
+    // Close modal when clicking outside modal content
+    modalContainers.forEach(container => {
+        container.addEventListener('click', (e) => {
+            if (e.target === container) {
+                closeModal(container);
+            }
+        });
+    });
+    
+    // Close modal with escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const activeModal = document.querySelector('.modal-container.active');
+            if (activeModal) {
+                closeModal(activeModal);
+            }
+        }
+    });
+}
+
+/**
+ * Open modal and handle specific modal logic
+ * @param {HTMLElement} modalContainer - The modal container element
+ * @param {HTMLElement} trigger - The element that triggered the modal
+ */
+function openModal(modalContainer, trigger) {
+    // Get product info from trigger if available
+    if (trigger.dataset.product && modalContainer.id === 'ticket-modal') {
+        updateTicketModal(trigger.dataset.product);
     }
     
-    // Ticket quantity buttons
-    if (ticketButtons.length > 0) {
-        ticketButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                // Remove active class from all buttons
-                ticketButtons.forEach(btn => btn.classList.remove('active'));
-                
-                // Add active class to clicked button
-                button.classList.add('active');
-                
-                // Update total price with animation
-                if (ticketTotal && addToCartBtn) {
-                    const quantity = parseInt(button.dataset.quantity);
-                    const price = parseFloat(addToCartBtn.dataset.price || 15);
-                    
-                    ticketTotal.classList.add('price-update');
-                    setTimeout(() => {
-                        ticketTotal.textContent = `R${(price * quantity).toFixed(2)}`;
-                        ticketTotal.classList.remove('price-update');
-                    }, 300);
-                }
-            });
-        });
+    // Add active class to show modal with animation
+    modalContainer.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Prevent scrolling
+    
+    // Trap focus inside modal
+    trapFocus(modalContainer);
+    
+    // Trigger custom event
+    const event = new CustomEvent('modalOpened', {
+        detail: { modalId: modalContainer.id }
+    });
+    document.dispatchEvent(event);
+}
+
+/**
+ * Close modal
+ * @param {HTMLElement} modalContainer - The modal container element
+ */
+function closeModal(modalContainer) {
+    modalContainer.classList.remove('active');
+    document.body.style.overflow = ''; // Re-enable scrolling
+    
+    // Trigger custom event
+    const event = new CustomEvent('modalClosed', {
+        detail: { modalId: modalContainer.id }
+    });
+    document.dispatchEvent(event);
+}
+
+/**
+ * Trap focus inside modal for accessibility
+ * @param {HTMLElement} modalContainer - The modal container element
+ */
+function trapFocus(modalContainer) {
+    const focusableElements = modalContainer.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    
+    if (focusableElements.length) {
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
         
-        // Set first button as active by default
-        ticketButtons[0].classList.add('active');
+        // Focus the first element
+        setTimeout(() => { firstElement.focus(); }, 100);
+        
+        // Trap focus in a loop
+        modalContainer.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                if (e.shiftKey && document.activeElement === firstElement) {
+                    e.preventDefault();
+                    lastElement.focus();
+                } else if (!e.shiftKey && document.activeElement === lastElement) {
+                    e.preventDefault();
+                    firstElement.focus();
+                }
+            }
+        });
     }
+}
+
+/**
+ * Initialize ticket selector functionality
+ */
+function initTicketSelector() {
+    const ticketModal = document.getElementById('ticket-modal');
+    if (!ticketModal) return;
     
-    // Custom ticket input
-    if (customTicketInput && ticketTotal && addToCartBtn) {
-        customTicketInput.addEventListener('input', () => {
+    const ticketButtons = ticketModal.querySelectorAll('.ticket-btn');
+    const customInput = ticketModal.querySelector('#custom-ticket-amount');
+    const ticketTotal = ticketModal.querySelector('.ticket-total');
+    const addToCartBtn = ticketModal.querySelector('.add-to-cart-btn');
+    
+    let currentProduct = null;
+    let ticketPrice = 0;
+    let selectedQuantity = 1;
+    
+    // Select ticket quantity
+    ticketButtons.forEach(button => {
+        button.addEventListener('click', () => {
             // Remove active class from all buttons
             ticketButtons.forEach(btn => btn.classList.remove('active'));
             
-            const quantity = parseInt(customTicketInput.value) || 1;
-            const price = parseFloat(addToCartBtn.dataset.price || 15);
+            // Add active class to clicked button
+            button.classList.add('active');
             
-            // Limit input to sensible values
-            if (quantity > 100) {
-                customTicketInput.value = 100;
-            } else if (quantity < 1) {
-                customTicketInput.value = 1;
+            // Update selected quantity
+            selectedQuantity = parseInt(button.dataset.quantity);
+            
+            // Update custom input to match
+            if (customInput) {
+                customInput.value = selectedQuantity;
             }
             
-            // Update price with animation
-            ticketTotal.classList.add('price-update');
-            setTimeout(() => {
-                ticketTotal.textContent = `R${(price * quantity).toFixed(2)}`;
-                ticketTotal.classList.remove('price-update');
-            }, 300);
+            // Update total price
+            updateTotal();
+        });
+    });
+    
+    // Update total when custom quantity changes
+    if (customInput) {
+        customInput.addEventListener('input', () => {
+            // Remove active class from all buttons
+            ticketButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Get value and enforce min/max
+            let value = parseInt(customInput.value) || 0;
+            const min = parseInt(customInput.min) || 1;
+            const max = parseInt(customInput.max) || 100;
+            
+            value = Math.max(min, Math.min(value, max));
+            customInput.value = value;
+            
+            // Update selected quantity
+            selectedQuantity = value;
+            
+            // Update total price
+            updateTotal();
         });
     }
     
-    // Add to cart functionality
+    // Add to cart button
     if (addToCartBtn) {
         addToCartBtn.addEventListener('click', () => {
-            const productId = addToCartBtn.dataset.product || 'default';
-            const productName = addToCartBtn.dataset.name || 'Raffle Entry';
-            const price = parseFloat(addToCartBtn.dataset.price || 15);
-            let quantity = 1;
-            
-            const activeButton = document.querySelector('.ticket-btn.active');
-            if (activeButton) {
-                quantity = parseInt(activeButton.dataset.quantity);
-            } else if (customTicketInput && customTicketInput.value) {
-                quantity = parseInt(customTicketInput.value) || 1;
+            if (currentProduct && selectedQuantity > 0) {
+                // Add to cart
+                addToCart(currentProduct, selectedQuantity, ticketPrice);
+                
+                // Close modal
+                closeModal(ticketModal);
+                
+                // Show confirmation message
+                showNotification('Tickets added to cart!', 'success');
             }
-            
-            // Get existing cart from localStorage
-            const cart = JSON.parse(localStorage.getItem('raffle-cart') || '[]');
-            
-            // Check if product already exists in cart
-            const existingItemIndex = cart.findIndex(item => 
-                item.productId === productId
-            );
-            
-            if (existingItemIndex !== -1) {
-                // Update existing item quantity
-                cart[existingItemIndex].quantity += quantity;
-                cart[existingItemIndex].total = cart[existingItemIndex].price * cart[existingItemIndex].quantity;
-            } else {
-                // Add new item to cart
-                cart.push({
-                    productId: productId,
-                    name: productName,
-                    price: price,
-                    quantity: quantity,
-                    total: price * quantity,
-                    timestamp: new Date().toISOString()
-                });
-            }
-            
-            // Save updated cart to localStorage
-            localStorage.setItem('raffle-cart', JSON.stringify(cart));
-            
-            // Update cart count in header with animation
-            const cartCount = document.querySelector('.cart-count');
-            if (cartCount) {
-                cartCount.textContent = cart.length;
-                cartCount.classList.add('pulse');
-                setTimeout(() => {
-                    cartCount.classList.remove('pulse');
-                }, 1000);
-            }
-            
-            // Show success notification
-            showCartNotification(productName, quantity);
-            
-            // Close modal
-            closeModal(ticketModal);
         });
+    }
+    
+    // Update ticket modal content based on product
+    window.updateTicketModal = function(productId) {
+        currentProduct = productId;
+        
+        // Reset quantity to 1
+        selectedQuantity = 1;
+        ticketButtons.forEach(btn => btn.classList.remove('active'));
+        if (ticketButtons.length > 0) ticketButtons[0].classList.add('active');
+        if (customInput) customInput.value = 1;
+        
+        // Set product details (title, price, description)
+        const productTitle = ticketModal.querySelector('.modal-product-title');
+        const productDesc = ticketModal.querySelector('.modal-product-desc');
+        
+        // Fetch product details from data attributes or API
+        let title = 'Select Tickets';
+        let description = '';
+        let price = 10; // Default price
+        
+        // Get price from trigger element if available
+        const trigger = document.querySelector(`[data-product="${productId}"]`);
+        if (trigger) {
+            title = trigger.dataset.title || trigger.textContent || title;
+            description = trigger.dataset.description || '';
+            price = parseFloat(trigger.dataset.price) || price;
+        }
+        
+        // Update modal content
+        if (productTitle) productTitle.textContent = title;
+        if (productDesc) productDesc.textContent = description;
+        
+        // Set ticket price
+        ticketPrice = price;
+        
+        // Update total
+        updateTotal();
+    };
+    
+    // Update total price display
+    function updateTotal() {
+        if (ticketTotal) {
+            const total = (ticketPrice * selectedQuantity).toFixed(2);
+            ticketTotal.textContent = `R${total}`;
+        }
+    }
+    
+    // Add item to cart
+    function addToCart(productId, quantity, price) {
+        // Get current cart or initialize empty array
+        let cart = JSON.parse(localStorage.getItem('raffle-cart') || '[]');
+        
+        // Check if product already in cart
+        const existingItemIndex = cart.findIndex(item => item.id === productId);
+        
+        if (existingItemIndex >= 0) {
+            // Update existing item
+            cart[existingItemIndex].quantity += quantity;
+        } else {
+            // Add new item
+            cart.push({
+                id: productId,
+                quantity: quantity,
+                price: price,
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+        // Save cart to localStorage
+        localStorage.setItem('raffle-cart', JSON.stringify(cart));
+        
+        // Update cart count in header
+        updateCartCount();
     }
 }
 
@@ -243,350 +294,203 @@ function initTicketModal() {
  * Initialize product detail modal
  */
 function initProductDetailModal() {
-    const productDetailModal = document.getElementById('product-detail-modal');
-    if (!productDetailModal) return;
+    const productModal = document.getElementById('product-detail-modal');
+    if (!productModal) return;
     
-    const modalClose = productDetailModal.querySelector('.modal-close');
-    
-    // Product detail modal triggers
-    const productTriggers = document.querySelectorAll('[data-product-id]');
-    productTriggers.forEach(trigger => {
-        trigger.addEventListener('click', (e) => {
-            if (e.target.tagName === 'A') return; // Don't trigger if clicked on button
-            
+    // Product detail modal functionality
+    document.addEventListener('click', (e) => {
+        // Check if clicked element is a product detail link
+        const productLink = e.target.closest('.prize-card a');
+        
+        if (productLink && !productLink.classList.contains('cta-button')) {
             e.preventDefault();
-            openModal(productDetailModal);
             
-            // In a real implementation, you would load product details from server here
-            const productId = trigger.dataset.productId;
-            const productCategory = trigger.dataset.category || 'tech';
-            const productName = trigger.querySelector('h3')?.textContent || 'Product';
+            const card = productLink.closest('.prize-card');
+            if (card) {
+                const productId = card.dataset.productId;
+                if (productId) {
+                    openProductDetail(productId);
+                }
+            }
+        }
+    });
+    
+    /**
+     * Open product detail modal
+     * @param {string} productId - The product ID to display
+     */
+    function openProductDetail(productId) {
+        // Show loading state
+        const modalContent = productModal.querySelector('.product-modal-content');
+        if (modalContent) {
+            modalContent.innerHTML = `
+                <div class="product-modal-loading">
+                    <div class="spinner"></div>
+                    <span>Loading product details...</span>
+                </div>
+            `;
+        }
+        
+        // Open modal
+        openModal(productModal);
+        
+        // Fetch product details (in a real implementation, this would be an AJAX call)
+        setTimeout(() => {
+            // For demo purposes, we're simulating an API response
+            const productDetails = getProductDetails(productId);
             
-            const productContent = productDetailModal.querySelector('.product-modal-content');
-            if (productContent) {
-                productContent.innerHTML = `
-                    <div class="product-loading">
-                        <div class="spinner"></div>
-                        <span>Loading product details...</span>
+            // Update modal content
+            if (modalContent && productDetails) {
+                modalContent.innerHTML = `
+                    <div class="product-detail">
+                        <div class="product-images">
+                            <div class="product-main-image">
+                                <img src="${productDetails.image}" alt="${productDetails.title}">
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <h2>${productDetails.title}</h2>
+                            <div class="product-meta">
+                                <span class="product-id">ID: ${productId}</span>
+                                <span class="product-status ${productDetails.status.toLowerCase()}">${productDetails.status}</span>
+                            </div>
+                            <div class="product-price">R${productDetails.price} per ticket</div>
+                            <div class="product-description">${productDetails.description}</div>
+                            
+                            <div class="product-stats">
+                                <div class="stat">
+                                    <span class="stat-label">Entries</span>
+                                    <span class="stat-value">${productDetails.entries}</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Remaining</span>
+                                    <span class="stat-value">${productDetails.remaining}</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">End Date</span>
+                                    <span class="stat-value">${productDetails.endDate}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" style="width: ${productDetails.progressPercent}%;"></div>
+                                <span class="progress-text">${productDetails.progressPercent}% Sold</span>
+                            </div>
+                            
+                            <div class="product-cta">
+                                <button class="cta-button add-to-cart-btn" data-product="${productId}" data-price="${productDetails.price}">Buy Tickets</button>
+                            </div>
+                        </div>
                     </div>
                 `;
                 
-                // Simulate loading data
-                setTimeout(() => {
-                    productContent.innerHTML = `
-                        <div class="product-modal-header">
-                            <h2>${productName}</h2>
-                            <span class="product-category">${productCategory}</span>
-                        </div>
-                        <div class="product-modal-body">
-                            <div class="product-images">
-                                <img src="${trigger.querySelector('img')?.src || ''}" alt="${productName}" class="product-main-image">
-                                <div class="product-thumbnails">
-                                    <img src="${trigger.querySelector('img')?.src || ''}" alt="${productName}" class="active">
-                                    <img src="assets/img/product-angle1.jpg" alt="${productName} - Angle 1">
-                                    <img src="assets/img/product-angle2.jpg" alt="${productName} - Angle 2">
-                                </div>
-                            </div>
-                            <div class="product-info">
-                                <p>This is a detailed description of the ${productName}. Enter this raffle for your chance to win!</p>
-                                
-                                <div class="product-features">
-                                    <h3>Prize Details</h3>
-                                    <ul>
-                                        <li>Brand new ${productName}</li>
-                                        <li>Full manufacturer warranty</li>
-                                        <li>Delivered directly to your door</li>
-                                        <li>Cash alternative available</li>
-                                    </ul>
-                                </div>
-                                
-                                <div class="product-meta">
-                                    <div class="meta-item">
-                                        <span class="meta-label">Ticket Price:</span>
-                                        <span class="meta-value">${trigger.querySelector('.price')?.textContent || 'R10 per ticket'}</span>
-                                    </div>
-                                    <div class="meta-item">
-                                        <span class="meta-label">Draw Date:</span>
-                                        <span class="meta-value">April 20, 2025</span>
-                                    </div>
-                                    <div class="meta-item">
-                                        <span class="meta-label">Tickets Remaining:</span>
-                                        <span class="meta-value">${trigger.querySelector('.prize-tickets')?.textContent || '450 tickets left'}</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="ticket-selector">
-                                    <button class="ticket-btn" data-quantity="1">1</button>
-                                    <button class="ticket-btn" data-quantity="5">5</button>
-                                    <button class="ticket-btn" data-quantity="10">10</button>
-                                    <button class="ticket-btn active" data-quantity="20">20</button>
-                                    <button class="ticket-btn" data-quantity="50">50</button>
-                                </div>
-                                
-                                <button class="cta-button add-to-cart-btn" data-product="${productId}">Buy Ticket</button>
-                                
-                                <div class="share-buttons">
-                                    <p>Share this prize:</p>
-                                    <div class="social-buttons">
-                                        <a href="#" class="social-btn" aria-label="Share on Facebook">
-                                            <svg viewBox="0 0 24 24" width="24" height="24">
-                                                <path fill="currentColor" d="M12 2C6.5 2 2 6.5 2 12c0 5 3.7 9.1 8.4 9.9v-7H8.9V12h1.5v-1.3c0-1.5.9-2.3 2.3-2.3.6 0 1.3.1 1.3.1v1.4h-.7c-.7 0-1 .4-1 .9V12h1.6l-.3 2.9h-1.3v7C18.3 21.1 22 17 22 12c0-5.5-4.5-10-10-10z"/>
-                                            </svg>
-                                        </a>
-                                        <a href="#" class="social-btn" aria-label="Share on Twitter">
-                                            <svg viewBox="0 0 24 24" width="24" height="24">
-                                                <path fill="currentColor" d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/>
-                                            </svg>
-                                        </a>
-                                        <a href="#" class="social-btn" aria-label="Share via Email">
-                                            <svg viewBox="0 0 24 24" width="24" height="24">
-                                                <path fill="currentColor" d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-                                            </svg>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    
-                    // Initialize thumbnail clicks
-                    const thumbnails = productContent.querySelectorAll('.product-thumbnails img');
-                    const mainImage = productContent.querySelector('.product-main-image');
-                    
-                    thumbnails.forEach(thumb => {
-                        thumb.addEventListener('click', () => {
-                            thumbnails.forEach(t => t.classList.remove('active'));
-                            thumb.classList.add('active');
-                            
-                            if (mainImage) {
-                                mainImage.classList.add('fade-out');
-                                setTimeout(() => {
-                                    mainImage.src = thumb.src;
-                                    mainImage.classList.remove('fade-out');
-                                    mainImage.classList.add('fade-in');
-                                    
-                                    setTimeout(() => {
-                                        mainImage.classList.remove('fade-in');
-                                    }, 300);
-                                }, 300);
-                            }
-                        });
-                    });
-                    
-                    // Initialize ticket buttons
-                    const ticketBtns = productContent.querySelectorAll('.ticket-btn');
-                    const addToCartBtn = productContent.querySelector('.add-to-cart-btn');
-                    
-                    ticketBtns.forEach(btn => {
-                        btn.addEventListener('click', () => {
-                            ticketBtns.forEach(b => b.classList.remove('active'));
-                            btn.classList.add('active');
-                            
-                            // Update button text with quantity
-                            if (addToCartBtn) {
-                                const quantity = btn.dataset.quantity;
-                                const price = parseFloat(trigger.querySelector('.price')?.textContent.match(/\d+(\.\d+)?/)?.[0] || 10);
-                                addToCartBtn.textContent = `Buy ${quantity} Ticket${quantity > 1 ? 's' : ''} for R${(price * quantity).toFixed(2)}`;
-                            }
-                        });
-                    });
-                    
-                    // Initialize add to cart button
-                    if (addToCartBtn) {
-                        const activeBtn = productContent.querySelector('.ticket-btn.active');
-                        const quantity = activeBtn?.dataset.quantity || 1;
-                        const price = parseFloat(trigger.querySelector('.price')?.textContent.match(/\d+(\.\d+)?/)?.[0] || 10);
-                        addToCartBtn.textContent = `Buy ${quantity} Ticket${quantity > 1 ? 's' : ''} for R${(price * quantity).toFixed(2)}`;
+                // Add event listener to Buy Tickets button
+                const buyButton = modalContent.querySelector('.add-to-cart-btn');
+                if (buyButton) {
+                    buyButton.addEventListener('click', () => {
+                        // Close product modal
+                        closeModal(productModal);
                         
-                        addToCartBtn.addEventListener('click', () => {
-                            const activeBtn = productContent.querySelector('.ticket-btn.active');
-                            const quantity = parseInt(activeBtn?.dataset.quantity || 1);
-                            const productId = trigger.dataset.productId;
-                            const productName = trigger.querySelector('h3')?.textContent || 'Product';
-                            const price = parseFloat(trigger.querySelector('.price')?.textContent.match(/\d+(\.\d+)?/)?.[0] || 10);
-                            
-                            // Get existing cart from localStorage
-                            const cart = JSON.parse(localStorage.getItem('raffle-cart') || '[]');
-                            
-                            // Check if product already exists in cart
-                            const existingItemIndex = cart.findIndex(item => 
-                                item.productId === productId
-                            );
-                            
-                            if (existingItemIndex !== -1) {
-                                // Update existing item quantity
-                                cart[existingItemIndex].quantity += quantity;
-                                cart[existingItemIndex].total = cart[existingItemIndex].price * cart[existingItemIndex].quantity;
-                            } else {
-                                // Add new item to cart
-                                cart.push({
-                                    productId: productId,
-                                    name: productName,
-                                    price: price,
-                                    quantity: quantity,
-                                    total: price * quantity,
-                                    timestamp: new Date().toISOString()
-                                });
-                            }
-                            
-                            // Save updated cart to localStorage
-                            localStorage.setItem('raffle-cart', JSON.stringify(cart));
-                            
-                            // Update cart count in header with animation
-                            const cartCount = document.querySelector('.cart-count');
-                            if (cartCount) {
-                                cartCount.textContent = cart.length;
-                                cartCount.classList.add('pulse');
-                                setTimeout(() => {
-                                    cartCount.classList.remove('pulse');
-                                }, 1000);
-                            }
-                            
-                            // Show success notification
-                            showCartNotification(productName, quantity);
-                            
-                            // Close modal
-                            closeModal(productDetailModal);
-                        });
-                    }
-                }, 800);
+                        // Open ticket modal
+                        const ticketModal = document.getElementById('ticket-modal');
+                        if (ticketModal) {
+                            openModal(ticketModal, buyButton);
+                        }
+                    });
+                }
             }
-        });
-    });
+        }, 500); // Simulate API delay
+    }
     
-    // Modal close
-    if (modalClose) {
-        modalClose.addEventListener('click', () => {
-            closeModal(productDetailModal);
-        });
+    /**
+     * Get product details (mock implementation)
+     * @param {string} productId - The product ID
+     * @returns {Object|null} - Product details or null if not found
+     */
+    function getProductDetails(productId) {
+        // In a real application, this would fetch data from an API
+        const products = {
+            'iphone15': {
+                title: 'iPhone 15 Pro',
+                description: 'Win the latest iPhone 15 Pro with an incredible camera system, A17 Pro chip for exceptional performance, and stunning Super Retina XDR display. This flagship smartphone delivers unmatched performance in a beautiful titanium design.',
+                price: 10,
+                image: 'assets/img/iphone15.jpg',
+                status: 'Active',
+                entries: 4513,
+                remaining: 487,
+                endDate: 'April 20, 2025',
+                progressPercent: 60
+            },
+            'macbook': {
+                title: 'MacBook Pro M3 Max',
+                description: 'Take your productivity to the next level with Apple\'s most powerful laptop featuring the groundbreaking M3 Max chip. Enjoy exceptional performance, stunning Liquid Retina XDR display, and all-day battery life in a sleek, premium design.',
+                price: 20,
+                image: 'assets/img/macbook-pro.jpg',
+                status: 'Active',
+                entries: 3658,
+                remaining: 342,
+                endDate: 'April 20, 2025',
+                progressPercent: 80
+            },
+            'holiday': {
+                title: 'Luxury Holiday Package',
+                description: 'Win a dream vacation for two to a luxury destination of your choice. Package includes return flights, 7 nights in a 5-star resort, daily breakfast, and exclusive experiences. Create memories that will last a lifetime with this incredible prize.',
+                price: 15,
+                image: 'assets/img/holiday1.jpg',
+                status: 'Active',
+                entries: 750,
+                remaining: 250,
+                endDate: 'May 15, 2025',
+                progressPercent: 40
+            }
+        };
+        
+        return products[productId] || null;
     }
 }
 
 /**
- * Initialize global modal handlers
+ * Show notification message
+ * @param {string} message - The message to display
+ * @param {string} type - The notification type (success, error, info)
  */
-function initGlobalModalHandlers() {
-    // Close modals when clicking outside
-    window.addEventListener('click', (e) => {
-        if (e.target.classList.contains('modal-container')) {
-            closeModal(e.target);
-        }
-    });
-    
-    // Close modals with Escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            const openModals = document.querySelectorAll('.modal-container.active');
-            openModals.forEach(modal => closeModal(modal));
-        }
-    });
-}
-
-/**
- * Show cart notification
- */
-function showCartNotification(productName, quantity) {
-    // Create notification element if it doesn't exist
-    let notification = document.querySelector('.cart-notification');
-    
-    if (!notification) {
-        notification = document.createElement('div');
-        notification.className = 'cart-notification';
-        document.body.appendChild(notification);
-    }
-    
-    // Set notification content
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
     notification.innerHTML = `
-        <div class="notification-icon">
-            <svg viewBox="0 0 24 24" width="24" height="24">
-                <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
-        </div>
         <div class="notification-content">
-            <h4>Added to Cart</h4>
-            <p>${quantity} ticket${quantity > 1 ? 's' : ''} for ${productName}</p>
+            <span>${message}</span>
+            <button class="notification-close">&times;</button>
         </div>
-        <a href="../views/cart.php" class="view-cart-link">View Cart</a>
-        <button class="notification-close">&times;</button>
     `;
     
-    // Show notification
+    // Add to document
+    document.body.appendChild(notification);
+    
+    // Show with animation
     setTimeout(() => {
-        notification.classList.add('active');
-        
-        // Add close button functionality
-        const closeBtn = notification.querySelector('.notification-close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => {
-                notification.classList.remove('active');
-                
-                setTimeout(() => {
-                    notification.remove();
-                }, 300);
-            });
-        }
-        
-        // Auto-hide after 5 seconds
-        setTimeout(() => {
-            notification.classList.remove('active');
-            
+        notification.classList.add('show');
+    }, 10);
+    
+    // Add close button functionality
+    const closeBtn = notification.querySelector('.notification-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            notification.classList.remove('show');
             setTimeout(() => {
                 notification.remove();
             }, 300);
-        }, 5000);
-    }, 100);
-}
-
-/**
- * Open modal with animation
- */
-function openModal(modal) {
-    if (!modal) return;
+        });
+    }
     
-    // Prevent body scrolling
-    document.body.style.overflow = 'hidden';
-    
-    // Show modal with animation
-    modal.classList.add('active');
-    
-    // Set focus to first focusable element for accessibility
+    // Auto remove after delay
     setTimeout(() => {
-        const focusableElements = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-        if (focusableElements.length > 0) {
-            focusableElements[0].focus();
+        if (document.body.contains(notification)) {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
         }
-    }, 100);
-    
-    // Add aria attributes
-    modal.setAttribute('aria-hidden', 'false');
-    
-    // Save last focused element to return focus when modal closes
-    modal.lastFocusedElement = document.activeElement;
-}
-
-/**
- * Close modal with animation
- */
-function closeModal(modal) {
-    if (!modal) return;
-    
-    // Hide modal with animation
-    modal.classList.remove('active');
-    
-    // Re-enable body scrolling after animation
-    setTimeout(() => {
-        // Only re-enable scrolling if no other modals are open
-        const openModals = document.querySelectorAll('.modal-container.active');
-        if (openModals.length === 0) {
-            document.body.style.overflow = '';
-        }
-        
-        // Update aria attributes
-        modal.setAttribute('aria-hidden', 'true');
-        
-        // Return focus to element that opened the modal
-        if (modal.lastFocusedElement) {
-            modal.lastFocusedElement.focus();
-        }
-    }, 300);
+    }, 5000);
 }
